@@ -11,6 +11,7 @@
     "require": {
         "karneaud/wppus-api-client":"dev-main"
     },
+    "minimum-stability": "dev",
     "repositories":[
         {
             "type": "package",
