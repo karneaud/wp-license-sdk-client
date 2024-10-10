@@ -1,6 +1,6 @@
 <?php
 
-namespace Karneaud\Licences\Manager;
+namespace Karneaud\Licence\Manager;
 
 if(!class_exists('WP_License_Manager')){
 
