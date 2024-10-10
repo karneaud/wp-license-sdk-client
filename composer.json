@@ -34,5 +34,8 @@
     },
     "suggest": {
         "art4/requests-psr18-adapter": "PSR-18 wrapper for Wordpress"
+    },
+    "allow-plugins": {
+        "php-http/discovery": true
     }
 }
