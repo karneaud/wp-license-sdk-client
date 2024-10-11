@@ -20,7 +20,7 @@ if(!class_exists('WP_License_Manager')){
         ) {
             $this->package_slug = $slug;
             $this->type = $type;
-            $this->package_version = $version
+            $this->package_version = $version;
             // Setup license checker to use the SDK client for license authority
             $this->api = WppusClientFactory::create(
                 new \Art4\Requests\Psr\HttpClient(['verify' => false, 'verifyname' => false]), 
