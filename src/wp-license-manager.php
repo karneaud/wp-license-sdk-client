@@ -47,6 +47,8 @@ new class {
     protected $slug;
     protected $errors;
     protected $license_manager;
+    protected $license_key;
+    protected $license_sig;
 	/**
 	 * Initialize the collections used to maintain the actions and filters.
 	 *
@@ -56,17 +58,17 @@ new class {
 		$this->actions = array();
         $this->filters = array();
         $this->type = self::is_plugin(__DIR__) ? 'plugin' : 'theme';
-        $package_type_dir_path = self::get_base_directory_path(__DIR__, $package_type);
-        $relative_path = substr(__DIR__, strlen($package_type_dir_path));
-        $path_parts = explode(DIRECTORY_SEPARATOR, trim($relative_path, DIRECTORY_SEPARATOR));
+        $package_type_dir_path = self::get_base_directory_path(__DIR__, "{$this->type}s");
+        $path_parts = explode(DIRECTORY_SEPARATOR, trim($package_type_dir_path, DIRECTORY_SEPARATOR));
         $package_slug = array_shift($path_parts); 
         $this->slug = trim($package_slug, DIRECTORY_SEPARATOR);
-        $this->license_manger = new WP_License_Manager(LICENSE_SERVER_URL, $this->slug, $this->type, PACKAGE_VERSION);
+        $this->license_manager = new WP_License_Manager(LICENSE_SERVER_URL, $this->slug, $this->type, PACKAGE_VERSION);
         $this->license_key = get_option("license_key_{$this->slug}");
         $this->license_sig = get_option("license_signature_{$this->slug}");
         // Register hooks for updates and license
         $this->register_license_hooks();
         call_user_func([$this, "register_{$this->type}_hooks"]);
+        $this->run();
     }
 	/**
 	 * Add a new action to the collection to be registered with WordPress.
@@ -151,9 +153,9 @@ new class {
         $this->add_action('admin_menu', $this, 'setup_theme_admin_menus', 10);
         $this->add_filter('custom_menu_order', $this, 'alter_admin_appearance_submenu_order',  10, 1);
         add_action('after_switch_theme', function() {
-            if (! $this->license_manager->validate_license_on_activation($this->license_key, $this->license_sig) ) {
+            if (! $this->license_manager->validate_license($this->license_key, $this->license_sig) ) {
                 $url = add_query_arg('page', 'theme-license', admin_url('themes.php'));
-                if (!strstr($_SERVER['REQUEST_URI'], $url) && stristr($_SERVER['REQUEST_URI'], 'theme')) {
+                if (!strstr($url, $_SERVER['REQUEST_URI']) && stristr($_SERVER['REQUEST_URI'], 'theme')) {
                     wp_redirect($url);
                     exit;
                 }
@@ -218,7 +220,7 @@ new class {
             $js_ext = $debug ? 'main.js' : 'main.min.js';
             $separator = DIRECTORY_SEPARATOR;
             $js_dir = plugin_dir_path(__FILE__) . "js{$separator}{$js_ext}";
-            $js_url = ($this->type == 'theme') ? (get_stylesheet_directory_uri() . '/' . self::get_base_directory_path($js_dir) ):( plugin_dir_url(__FILE__) . "js/{$js_ext}");
+            $js_url = ($this->type == 'theme') ? (get_stylesheet_directory_uri() . '/' . self::get_base_directory_path($js_dir, $this->slug) ):( plugin_dir_url(__FILE__) . "js/{$js_ext}");
             if (file_exists($js_dir)) {
                 $ver_js = filemtime($js_dir);
                 wp_enqueue_script("wp-license-manager-script-{$this->slug}", $js_url, ['jquery'], $ver_js, true);
@@ -327,6 +329,7 @@ new class {
         $license      = $this->license_key;
         $package_id   = $this->type == 'theme'? $this->slug : "{$this->slug}/{$this->slug}.php";
         $package_slug = $this->slug;
+        $title = "License Authorization for " . ucfirst($this->type);
         include __DIR__ . "/templates/license-{$name}.php";
     }
     /**
@@ -381,4 +384,4 @@ new class {
         return join(DIRECTORY_SEPARATOR, $plugin_dir);
     }
 
-}
+};
