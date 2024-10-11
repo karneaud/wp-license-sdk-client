@@ -34,7 +34,7 @@ if(!class_exists('WP_License_Manager')){
                 $request = new PostLicensesActivateRequest(WppusClientFactory::createRequestBody([
                     'licenseKey' => $license_key,
                     'packageSlug' => $this->package_slug,
-                    'allowedDomains' => $_SERVER['HTTP_HOST'];
+                    'allowedDomains' => $_SERVER['HTTP_HOST']
                 ]));
                 $response = $this->query_server($request, 'postLicensesActivate');
                 $response->code = 200;
