@@ -1,6 +1,8 @@
 <?php
 
-namespace Karneaud\Licence\Manager;
+namespace Karneaud\License\Manager;
+
+use Wppus\Client\Factory;
 
 if(!class_exists('WP_License_Manager')){
 
@@ -22,7 +24,7 @@ if(!class_exists('WP_License_Manager')){
             $this->type = $type;
             $this->package_version = $version;
             // Setup license checker to use the SDK client for license authority
-            $this->api = WppusClientFactory::create(
+            $this->api = Factory::create(
                 new \Art4\Requests\Psr\HttpClient(['verify' => false, 'verifyname' => false]), 
                 $server); // Initialize SDK client
         }
@@ -72,7 +74,7 @@ if(!class_exists('WP_License_Manager')){
             return $response;
         }
 
-        private function validate_license(string $license_key, string $license_sig = null)
+        public function validate_license(string $license_key, string $license_sig = null)
         {
             $valid = true;
             try {
