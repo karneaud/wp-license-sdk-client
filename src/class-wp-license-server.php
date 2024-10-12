@@ -56,14 +56,13 @@ if(!class_exists('WP_License_Server')){
         public function deactivate_license(string $license_key, string $license_sig) {
             
             try {
-                $request = new PostLicensesDeactivateRequest(WppusClientFactory::createRequestBody([
+                $request = new PostLicensesDeactivateRequest(Factory::createRequestBody([
                     'licenseKey' => $license_key,
                     'packageSlug' => $this->package_slug,
                     'allowedDomains' => $_SERVER['HTTP_HOST'],
                     'licenseSignature' => $license_sig
                 ]));
                 $response = $this->query_server($request, 'postLicensesDeactivate');
-                $response = $this->query_server($request, 'postLicensesActivate');
             } catch (\Throwable $th) {
                $response = new \Exception(sprintf("License Error: Unable to deactivate license. %d:  %s", $th->getCode(), $th->getMessage()), $th->getCode());
             }
@@ -83,10 +82,10 @@ if(!class_exists('WP_License_Server')){
         {
             $valid = true;
             try {
-                if(empty($licence_key)) throw new Exception;
-
-                $request = new GetLicensesCheckRequest($license_key, $this->package_slug, $licence_sig );
-                $valid = is_object( $this->query_server($request,'getLicensesCheck'));
+                if(empty($license_key)) throw new Exception;
+                $request = new GetLicensesCheckRequest($license_key, $this->package_slug, $license_sig );
+                $response = $this->query_server($request,'getLicensesCheck');
+                $valid = $response;
             } catch (\Throwable $th) {
                 $valid = false;
             }
@@ -96,3 +95,4 @@ if(!class_exists('WP_License_Server')){
     }
 
 }
+
