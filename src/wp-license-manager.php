@@ -2,9 +2,8 @@
 
 use Karneaud\License\Manager\WP_License_Server;
 
-if (!defined('ABSPATH') || !defined('PACKAGE_VERSION') || !defined('LICENSE_SERVER_URL')) exit;
+if (!defined('ABSPATH') ) exit;
 
-define('WP_THEME_DIR', WP_CONTENT_DIR . '/themes');
 
 /**
  * Register all actions and filters for the plugin
@@ -12,7 +11,7 @@ define('WP_THEME_DIR', WP_CONTENT_DIR . '/themes');
  * @link       https://kendallarneaud.me
  * @since      1.0.0
  *
- * @package    WP_Package_Loader
+ * @package    WP_License_Manager
  */
 
 /**
@@ -22,7 +21,7 @@ define('WP_THEME_DIR', WP_CONTENT_DIR . '/themes');
  * the plugin, and register them with the WordPress API. Call the
  * run function to execute the list of actions and filters.
  *
- * @package    WP_Package_Loader
+ * @package    WP_License_Manager
  * @author     Kendall Arneaud <kendall.arneaud@gmail.com>
  */
 new class {
@@ -61,7 +60,9 @@ new class {
         $path_parts = explode(DIRECTORY_SEPARATOR, trim($package_type_dir_path, DIRECTORY_SEPARATOR));
         $package_slug = array_shift($path_parts); 
         $this->slug = trim($package_slug, DIRECTORY_SEPARATOR);
-        $this->license_server = new WP_License_Server(LICENSE_SERVER_URL, $this->slug, $this->type, PACKAGE_VERSION);
+        $settings = file_get_contents ( WP_CONTENT_DIR . "/{$this->type}s/{$this->slug}/wppus.json");
+        $settings = json_decode($settings);
+        $this->license_server = new WP_License_Server($settings->server, $this->slug, $this->type, $settings->version);
         $this->license_key = get_option("license_key_{$this->slug}");
         $this->license_sig = get_option("license_signature_{$this->slug}");
         // Register hooks for updates and license
@@ -149,8 +150,8 @@ new class {
      * Register hooks for themes
      */
     private function register_theme_hooks() {
-        $this->add_action('admin_menu', $this, 'setup_theme_admin_menus', 10);
-        $this->add_filter('custom_menu_order', $this, 'alter_admin_appearance_submenu_order',  10, 1);
+        if ($this->slug === get_stylesheet())  {$this->add_action('admin_menu', $this, 'setup_theme_admin_menus', 10);
+        $this->add_filter('custom_menu_order', $this, 'alter_admin_appearance_submenu_order',  10, 1);}
         add_action('after_switch_theme', function() {
             if (! $this->license_server->validate_license($this->license_key, $this->license_sig) ) {
                 $url = add_query_arg('page', 'theme-license', admin_url('themes.php'));
@@ -309,14 +310,25 @@ new class {
      * Validate theme license on activation.
      */
     public function validate_theme_license_on_activation($screen) {
-        if ( !$this->license_server->validate_license($this->license_key, $this->license_sig)) {
+        if ( !$this->validate_license($this->license_key, $this->license_sig)) {
             if ($screen->base === 'themes' && $this->slug === get_stylesheet()) {
                 $themes = array_filter(array_keys(wp_get_themes()), fn($theme) => $theme !== $this->slug) + [WP_DEFAULT_THEME];
                 $default = array_shift($themes);
-                switch_theme($default);
+               //  switch_theme($default);
                 $this->errorHandler(400, __('Theme license is not valid. Theme deactivated', 'wp-license-manager'));
             }
         }
+    }
+
+    private function validate_license() {
+        if(!($response = get_transient( "{$this->slug}_valid_checked" )) || (((json_decode($response))->last_checked - time()) > DAY_IN_SECONDS) ) {
+            $response = $this->license_server->validate_license($this->license_key, $this->license_sig);
+            if(!$response) return false;
+
+            set_transient("{$this->slug}_valid_checked", json_encode($response), DAY_IN_SECONDS);
+        }
+
+        return true;
     }
 
     public function validate_plugin_license_on_activation() {
@@ -324,7 +336,7 @@ new class {
             wp_die(__('Sorry, you are not allowed to access this page.'));
         }
 
-        if (!$this->license_server->validate_license($this->license_key, $this->license_sig)) 
+        if (!$this->validate_license($this->license_key, $this->license_sig)) 
         {
             
             deactivate_plugins("{$this->slug}/{$this->slug}.php");
