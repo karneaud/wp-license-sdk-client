@@ -3,10 +3,15 @@
 namespace Karneaud\License\Manager;
 
 use Wppus\Client\Factory;
+use Art4\Requests\Psr\HttpClient;
+use Wppus\Client\Request\RequestInterface;
+use Wppus\Client\Request\GetLicensesCheckRequest;
+use Wppus\Client\Request\PostLicensesActivateRequest;
+use Wppus\Client\Request\PostLicensesDeactivateRequest;
 
-if(!class_exists('WP_License_Manager')){
+if(!class_exists('WP_License_Server')){
 
-    final class WP_License_Manager {
+    final class WP_License_Server {
         private $package_version = '1.0.0';
         private $package_slug;
         private $package_id;
@@ -25,15 +30,15 @@ if(!class_exists('WP_License_Manager')){
             $this->package_version = $version;
             // Setup license checker to use the SDK client for license authority
             $this->api = Factory::create(
-                new \Art4\Requests\Psr\HttpClient(['verify' => false, 'verifyname' => false]), 
+                new HttpClient(['verify' => false, 'verifyname' => false]), 
                 $server); // Initialize SDK client
         }
 
-        public function activate_license( string $licence_key, string $package_slug = null, string $type = 'theme' ) {
+        public function activate_license( string $license_key, string $package_slug = null, string $type = 'theme' ) {
             if(count(array_filter(func_get_args())) != 3 || [$package_slug, $type] != [$this->package_slug, $this->type]) return false;
 
             try {
-                $request = new PostLicensesActivateRequest(WppusClientFactory::createRequestBody([
+                $request = new PostLicensesActivateRequest(Factory::createRequestBody([
                     'licenseKey' => $license_key,
                     'packageSlug' => $this->package_slug,
                     'allowedDomains' => $_SERVER['HTTP_HOST']
@@ -42,7 +47,7 @@ if(!class_exists('WP_License_Manager')){
                 $response->code = 200;
                 $response->message = "License Success: {$response->license_key} Activated!";
             } catch (\Throwable $th) {
-                $response = new \Exception(sprintf("License Error: Unable to activate license. %d:  %s", $th->getCode(), $th->getMessage()), $th->getCode());
+                $response = new \Exception(sprintf("License Error: Unable to activate license. %s", $th->getMessage()), $th->getCode() ?? 400 );
             }
             
             return $response;
@@ -69,7 +74,7 @@ if(!class_exists('WP_License_Manager')){
         private function query_server(RequestInterface $request, string $func )
         {
             $response = null;
-            $response = (object) call_user_func( [$this->update_checker, $func], $request);
+            $response = (object) call_user_func( [$this->api, $func], $request);
         
             return $response;
         }
@@ -78,7 +83,9 @@ if(!class_exists('WP_License_Manager')){
         {
             $valid = true;
             try {
-                $request = new GetLicensesCheckRequest($license, $this->package_slug, $licence_sig );
+                if(empty($licence_key)) throw new Exception;
+
+                $request = new GetLicensesCheckRequest($license_key, $this->package_slug, $licence_sig );
                 $valid = is_object( $this->query_server($request,'getLicensesCheck'));
             } catch (\Throwable $th) {
                 $valid = false;
@@ -86,9 +93,6 @@ if(!class_exists('WP_License_Manager')){
 
             return  $valid;
         }
-       
-
     }
 
 }
-
