@@ -31,7 +31,7 @@
         }
     ],
     "autoload": {
-        "classmap": ["./src/class-wp-license-manager.php","./src/wp-license-manager.php"]
+        "classmap": ["./src/class-wp-license-server.php","./src/wp-license-manager.php"]
     },
     "suggest": {
         "art4/requests-psr18-adapter": "PSR-18 wrapper for Wordpress"
