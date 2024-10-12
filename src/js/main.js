@@ -12,7 +12,7 @@ jQuery(document).ready(function($) {
 	$('.wrap-license .activate-license').on('click', function(e) {
 		e.preventDefault();
 
-		var licenseContainer = $(this).parent().parent(),
+		var licenseContainer = $(this).parent().parent(), errorContainer = licenseContainer.find('.current-license-error'),
 			data             = {
 			'nonce' : licenseContainer.data('nonce'),
 			'license_key' : licenseContainer.find('.license').val(),
@@ -32,9 +32,9 @@ jQuery(document).ready(function($) {
 					licenseContainer.find('.license-message').show();
 					$( '.license-error-' + licenseContainer.data('package_slug') + '.notice' ).hide();
 				} else {
-					var errorContainer = licenseContainer.find('.current-license-error');
 					
-					errorContainer.html(response.data[0].message + '<br/>');
+					
+					errorContainer.html(response.data.message + '<br/>');
 					errorContainer.show();
 					licenseContainer.find('.license-message').show();
 				}
@@ -46,6 +46,11 @@ jQuery(document).ready(function($) {
 					licenseContainer.find('.current-license-label').show();
 					licenseContainer.find('.current-license').show();
 				}
+			},
+			error: function() {
+				errorContainer.html("Something went wrong!" + '<br/>');
+					errorContainer.show();
+					licenseContainer.find('.license-message').show();
 			}
 		});
 	});
@@ -53,7 +58,7 @@ jQuery(document).ready(function($) {
 	$('.wrap-license .deactivate-license').on('click', function(e) {
 		e.preventDefault();
 
-		var licenseContainer = $(this).parent().parent(),
+		var licenseContainer = $(this).parent().parent(), errorContainer = licenseContainer.find('.current-license-error'),
 			data             = {
 			'nonce' : licenseContainer.data('nonce'),
 			'license_key' : licenseContainer.find('.license').val(),
@@ -72,9 +77,7 @@ jQuery(document).ready(function($) {
 					licenseContainer.find('.current-license-error').hide();
 					licenseContainer.find('.license-message').hide();
 				} else {
-					var errorContainer = licenseContainer.find('.current-license-error');
-
-					errorContainer.html(response.data[0].message + '<br/>');
+					errorContainer.html(response.data.message + '<br/>');
 					errorContainer.show();
 					licenseContainer.find('.license-message').show();
 				}
@@ -86,6 +89,11 @@ jQuery(document).ready(function($) {
 					licenseContainer.find('.current-license-label').show();
 					licenseContainer.find('.current-license').show();
 				}
+			},
+			error: function() {
+				errorContainer.html("Something went wrong!" + '<br/>');
+					errorContainer.show();
+					licenseContainer.find('.license-message').show();
 			}
 		});
 	});
