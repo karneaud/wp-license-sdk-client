@@ -5,9 +5,6 @@
         "client",
         "wordpress"
     ],
-    "config": {
-        "sort-packages": true
-    },
     "require": {
         "karneaud/wpus-api-client":"dev-main"
     },
@@ -26,14 +23,41 @@
                     "url": "https://github.com/karneaud/wppus-api-client.git",
                     "type": "git",
                     "reference": "main"
+                },
+                "require": {
+                    "php": "^7.4 || ^8.0",
+                    "docler-labs/api-client-exception": "^1.0 || ^2.0",
+                    "ext-json": "*",
+                    "psr/container": "^1.0 || ^2.0",
+                    "psr/http-client": "^1.0",
+                    "php-http/discovery":"^1.17",
+                    "psr/http-client-implementation":"*",
+                    "psr/http-factory-implementation":"*",
+                    "pimple/pimple":"*"
                 }
             }
         }
     ],
     "autoload": {
-        "classmap": ["./src/class-wp-license-server.php","./src/wp-license-manager.php"]
+        "classmap": ["./src/class-wp-license-server.php","./src/wp-license-manager.php"],
+        "psr-4": {
+            "Wppus\\Client\\":"./lib/karneaud/wppus-api-client/src",
+            "Art4\\Requests\\Psr\\HttpClient\\":"./lib/art4/requests-psr-18-adapter/src"
+        }
+    },
+    "config": {
+        "vendor-dir": "lib",
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    },
+    "extra": {
+        "discovery": {
+            "psr/http-factory-implementation": "Art4\\Requests\\Psr\\HttpClient",
+            "Psr\\Http\\Message\\RequestFactoryInterface": "Art4\\Requests\\Psr\\HttpClient"
+        }
     },
     "suggest": {
         "art4/requests-psr18-adapter": "PSR-18 wrapper for Wordpress"
-    }
+    }  
 }
